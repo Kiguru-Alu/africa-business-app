@@ -1,0 +1,50 @@
+:root{
+    --bg:#f6f8fb; --card:#fff; --muted:#6b7280; --accent:#0b64d6;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    background:var(--bg); color:#0f1724; min-height:100vh;
+  }
+  .topbar{
+    padding:14px 20px; background:linear-gradient(90deg,#07325f,#1b6be6); color:#fff;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .brand{font-weight:700; font-size:18px}
+  .tag{font-size:13px; opacity:0.95}
+  
+  .layout{display:flex; gap:18px; padding:18px; align-items:flex-start}
+  .panel{background:var(--card); border-radius:10px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,.06)}
+  .controls{width:320px}
+  .main{flex:1; max-height:72vh; overflow:auto}
+  
+  .control-group{margin-bottom:12px}
+  .control-row{display:flex; gap:8px; margin-bottom:12px}
+  select,input{width:100%; padding:9px 10px; border-radius:8px; border:1px solid #e6edf6; background:#fff; font-size:14px}
+  
+  .loader{margin-top:10px;color:var(--muted)}
+  .error{color:#b91c1c;font-weight:600;margin-top:10px}
+  
+  .table-wrap{overflow:auto}
+  table{width:100%; border-collapse:collapse; min-width:700px}
+  th,td{padding:10px 12px; border-bottom:1px solid #eef4ff}
+  th{background:#f3f7ff; text-align:left; font-weight:600}
+  .numeric{text-align:right}
+  tr:hover{background:#fbfdff; cursor:pointer}
+  
+  .footer{padding:10px 18px;text-align:center;font-size:13px;color:var(--muted)}
+  
+  .profile{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(2,6,23,0.45); visibility:hidden; opacity:0; transition:opacity .18s, visibility .18s;
+  }
+  .profile[aria-hidden="false"]{visibility:visible; opacity:1}
+  .profile-inner{width:840px; max-width:95%; background:var(--card); border-radius:10px; padding:18px; position:relative}
+  .close{position:absolute; right:12px; top:12px; border:0; background:transparent; font-size:18px; cursor:pointer}
+  .chart-container{height:300px}
+  .small{font-size:13px}
+  .muted{color:var(--muted)}
+  .indicator-list{list-style:none;padding-left:0}
+  .indicator-list li{padding:8px 0;border-bottom:1px dashed #eef4ff}
+  .profile-block{margin-top:12px}
+  

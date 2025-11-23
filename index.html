@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Africa Economy Hybrid Dashboard</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Africa Economy Explorer</div>
+    <div class="tag">Live World Bank v2 • Frontend-only</div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel controls">
+      <div class="control-group">
+        <label for="indicatorSelect">Indicator</label>
+        <select id="indicatorSelect"></select>
+      </div>
+
+      <div class="control-group">
+        <label for="countrySelect">Country (profile)</label>
+        <select id="countrySelect"><option value="">— select country —</option></select>
+      </div>
+
+      <div class="control-row">
+        <input id="searchBox" placeholder="Search country..." />
+        <select id="regionFilter">
+          <option value="">All regions</option>
+          <option value="Sub-Saharan Africa">Sub-Saharan Africa</option>
+          <option value="Middle East & North Africa">Middle East & North Africa</option>
+        </select>
+      </div>
+
+      <div class="control-row">
+        <select id="sortSelect">
+          <option value="name_asc">Name A → Z</option>
+          <option value="name_desc">Name Z → A</option>
+          <option value="value_desc">Value ↓</option>
+          <option value="value_asc">Value ↑</option>
+        </select>
+
+        <select id="yearFilter">
+          <option value="">Any year</option>
+          <!-- dynamic year options may be added by the app -->
+        </select>
+      </div>
+
+      <div id="loader" class="loader">Loading countries & indicators…</div>
+      <div id="error" class="error" style="display:none"></div>
+
+      <div class="notes">
+        <strong>Notes</strong>
+        <ul>
+          <li>Data: World Bank Open Data (v2).</li>
+          <li>All values shown are the latest available non-null values within the last 12 years.</li>
+        </ul>
+      </div>
+    </aside>
+
+    <section class="panel main">
+      <div class="table-wrap">
+        <table id="dataTable" aria-live="polite">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Region</th>
+              <th class="numeric">Year</th>
+              <th class="numeric">Indicator</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Profile modal -->
+  <div id="profile" class="profile" aria-hidden="true">
+    <div class="profile-inner panel">
+      <button id="closeProfile" class="close" title="Close">✕</button>
+      <h2 id="profileName"></h2>
+      <div id="profileMeta" class="muted small"></div>
+
+      <div class="profile-block">
+        <h3>Trend (selected indicator)</h3>
+        <div class="chart-container"><canvas id="trendChart"></canvas></div>
+      </div>
+
+      <div class="profile-block">
+        <h3>Latest key indicators</h3>
+        <ul id="profileIndicators" class="indicator-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer"> Data courtesy of World Bank API v2. CC: Mahui Brian</footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
