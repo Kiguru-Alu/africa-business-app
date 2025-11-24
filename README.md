@@ -31,6 +31,7 @@
 - `index.html` — UI and layout  
 - `styles.css` — styling and responsive rules  
 - `script.js` — JavaScript that fetches data from the **World Bank Open Data API (V2)**, renders tables, supports search/sort/filter and draws 10-year charts using Chart.js (loaded from CDN).
+- `config.js` - environment file where api variable is stored and shared to script.js
 
 ### Core features
 - Select an indicator (GDP, GDP per capita, GDP growth, population, inflation, etc.)
