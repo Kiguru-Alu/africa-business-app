@@ -1,86 +1,95 @@
-README — World Economy Explorer
+# Africa Business App — World Economy Explorer
 
-Static HTML/CSS/JS app that lets you explore World economic indicators (World Bank V2) and inspect country profiles with 10-year trends.
+> Static frontend (HTML/CSS/JS) dashboard for exploring World Bank V2 economic indicators with country profiles and 10-year charts.  
+> Designed to run locally for development and to be deployed to two Nginx web servers behind an HAProxy load balancer with HTTPS termination.
 
-This README has two parts:
+---
 
-Part 1 — App description & functionality
+## Contents
 
-Part 2 — Deployment & server/load-balancer configuration (step-by-step)
+- **Part 1 — App overview & local run**
+- **Part 2 — Production deployment (Web01, Web02, LB01)**  
+  - Architecture overview  
+  - DNS & domain notes  
+  - Nginx configuration (web servers)  
+  - HAProxy configuration (load balancer)  
+  - Obtaining & installing Let’s Encrypt certs (certbot)  
+  - Health checks, automation scripts, and verification tests  
+  - Troubleshooting and common fixes
+- **Credits & external resources**
 
-Part 1 — App description & functionality
+---
 
-Name: World Economy Explorer
-Files: index.html, styles.css, script.js (located in /var/www/html/africa-business-app/)
-Type: Static client-side web app (no backend required)
-Data source: World Bank Open Data API (V2) — no API key required
+## Part 1 — App overview & local run
 
-What the app does
+### What the app is
+**Africa Business App (World Economy Explorer)** is a client-side static application (no server-side code required) built with:
 
-Lets the user select an economic indicator (GDP, GDP per capita, GDP growth, population, inflation, unemployment, etc.) and view the latest available non-null value for every African country (selected by region filter).
+- `index.html` — UI and layout  
+- `styles.css` — styling and responsive rules  
+- `script.js` — JavaScript that fetches data from the **World Bank Open Data API (V2)**, renders tables, supports search/sort/filter and draws 10-year charts using Chart.js (loaded from CDN).
 
-Provides search, sort, and filter abilities on the table of countries.
+### Core features
+- Select an indicator (GDP, GDP per capita, GDP growth, population, inflation, etc.)
+- Table of countries with the latest available (non-null) value per country
+- Search, filter and sort the table
+- Country profile modal showing a 10-year trend chart and key indicators
+- Graceful error handling if the API is slow or returns empty values
 
-Clicking a country opens a country profile modal showing:
+### Local development / testing
+You can run the app entirely from the file system or from a minimal local HTTP server.
 
-A 10-year trend chart for the currently selected indicator (Chart.js used from CDN).
+**Open directly in browser**  
+Open `/path/to/africa-business-app/index.html` in your browser. (Works for most features, but some browsers block `fetch()` from `file://`.)
 
-A list of latest key indicators (GDP, growth %, population, inflation, etc.).
+**Recommended: start a simple local HTTP server (Python)**
+```bash
+# from inside the app folder
+python3 -m http.server 8000
+# then open http://localhost:8000 in your browser
 
-Handles API quirks:
 
-Uses World Bank V2 endpoints.
+Notes for development
 
-Fetches a limited date range (last 10–12 years) and picks the most recent non-null value.
+The app calls the World Bank V2 endpoints directly from the browser. No API key is required.
 
-Uses bulk indicator fetch for performance (/country/all/indicator/…&per_page=1000) and then maps to countries instead of doing one call per country.
+If you change styles.css, press Ctrl+F5 (or Cmd+Shift+R) to hard-refresh the browser to avoid caching.
 
-No sensitive credentials are embedded in the repo. (World Bank V2 is keyless.)
-
-Why it’s useful
-
-Quick comparative view of African economies.
-
-Country profiles with trends to spot recent movement.
-
-Lightweight and deployable as static files on any web server (Nginx used here).
-
-Part 2 — Deployment & load-balancer configuration (detailed)
-
-This section documents the exact steps performed on Web01 (44.201.90.229), Web02 (44.206.243.220), and LB01 (44.202.4.117). Use it as your hands-on deployment guide and verification checklist.
-
-Summary of architecture
+Part 2 — Production deployment (complete)
+Architecture (what we deployed)
 Client (browser)
    ⇩ HTTPS
 LB01 (HAProxy) — TLS termination; round-robin → Web01, Web02
    ⇩ HTTP
-Web01 (Nginx) — serves /var/www/html/africa-business-app
-Web02 (Nginx) — serves /var/www/html/africa-business-app
+Web01 (Nginx) — serves /var/www/html/africa-business-app (X-Served-By: web01)
+Web02 (Nginx) — serves /var/www/html/africa-business-app (X-Served-By: web02)
 
 
-DNS entries:
+Server IPs used in deployment
 
-A record mahui.tech → 44.202.4.117 (LB01)
+Web01: 44.201.90.229
 
-A record www.mahui.tech → 44.202.4.117
+Web02: 44.206.243.220
 
-Why HAProxy + TLS termination?
+LB01: 44.202.4.117
 
-Centralized certificate management (Let’s Encrypt on LB01).
+Domain used
 
-Offload TLS from web servers (simpler web server config).
+mahui.tech (and www.mahui.tech) — both should point (A records) to 44.202.4.117 (LB01).
 
-Round-robin load balancing for simple scalability and redundancy.
+Why this design
 
-Health checks ensure traffic only goes to healthy web backends.
+HAProxy on LB01 terminates TLS with Let’s Encrypt certs, so backends can run plain HTTP.
 
-Preparation & assumptions
+Central TLS simplifies cert management/renewal and offloads CPU work from web servers.
 
-You have SSH access to the three servers (user ubuntu used in examples).
+Round-robin load balancing distributes traffic and gives redundancy.
 
-You have a functional private key for SSH (stored locally). Keep permissions chmod 600 key.
+X-Served-By header on each web server verifies which server handled a request.
 
-Static app files already exist on both web servers at:
+Files & key locations (final system)
+
+App files (on each web server):
 
 /var/www/html/africa-business-app/
   ├─ index.html
@@ -88,27 +97,31 @@ Static app files already exist on both web servers at:
   └─ script.js
 
 
-Nginx installed on Web01 and Web02. HAProxy installed on LB01.
+Nginx site (on web servers):
 
-Domain owner can add A records pointing to LB01.
+/etc/nginx/sites-available/africa_business_app.conf
+/etc/nginx/sites-enabled/ -> symlink to the file above
 
-Step A — Copy app files to both web servers (if needed)
 
-If not already present, copy the folder using scp (example uses key.pem — replace with your key path and myapp):
+HAProxy config (on LB):
 
-# copy to web01
-scp -i key.pem -r myapp/ ubuntu@44.201.90.229:/tmp/
-ssh -i key.pem ubuntu@44.201.90.229 "sudo rm -rf /var/www/html/* && sudo cp -r /tmp/myapp/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/"
+/etc/haproxy/haproxy.cfg
+/etc/haproxy/certs/mahui.tech.pem   # combined fullchain+privkey
 
-# copy to web02
-scp -i key.pem -r myapp/ ubuntu@44.206.243.220:/tmp/
-ssh -i key.pem ubuntu@44.206.243.220 "sudo rm -rf /var/www/html/* && sudo cp -r /tmp/myapp/* /var/www/html/ && sudo chown -R www-data:www-data /var/www/html/"
 
-Step B — Configure Nginx on Web01 and Web02
+Certbot certs (on LB):
 
-Goal: make Nginx serve /var/www/html/africa-business-app as the default site.
+/etc/letsencrypt/live/mahui.tech/fullchain.pem
+/etc/letsencrypt/live/mahui.tech/privkey.pem
 
-Create an Nginx site file (on each web server). Example file path: /etc/nginx/sites-available/africa_business_app.conf
+
+Renewal hook (on LB):
+
+/etc/letsencrypt/renewal-hooks/deploy/haproxy-reload.sh
+
+Nginx configuration (use on Web01 and Web02)
+
+Create /etc/nginx/sites-available/africa_business_app.conf with this content:
 
 server {
     listen 80 default_server;
@@ -122,57 +135,35 @@ server {
         try_files $uri $uri/ /index.html =404;
     }
 
-    # helpful header to verify which server served the request
-    add_header X-Served-By "web01" always;  # set "web02" on the other server
+    # change the header value to "web01" on Web01 and "web02" on Web02
+    add_header X-Served-By "web01" always;
 }
 
 
-Enable the site and remove the default site to avoid catch-all redirects:
+Enable and reload:
 
 sudo ln -sf /etc/nginx/sites-available/africa_business_app.conf /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
-sudo rm -f /etc/nginx/sites-available/default
-
-
-Fix ownership & permissions:
-
 sudo chown -R www-data:www-data /var/www/html/africa-business-app
 sudo find /var/www/html/africa-business-app -type d -exec chmod 755 {} \;
 sudo find /var/www/html/africa-business-app -type f -exec chmod 644 {} \;
+sudo nginx -t && sudo systemctl reload nginx
 
 
-Test & reload:
+Verification (on each web server)
 
-sudo nginx -t
-sudo systemctl reload nginx
+curl -I http://localhost:80      # should return 200 OK and X-Served-By
+curl -I http://<WEB_IP>:80 | grep -i X-Served-By
 
+HAProxy config (LB01) — TLS termination + round robin
 
-Verify locally (on the web server):
-
-curl -I http://localhost:80      # should return HTTP/1.1 200 OK and X-Served-By header
-curl http://localhost:80/ | head -n 20  # should return HTML from index.html
-
-
-Verify remotely (from your workstation):
-
-curl -I http://44.201.90.229:80 | grep -i X-Served-By
-curl -I http://44.206.243.220:80 | grep -i X-Served-By
-
-
-Notes & gotchas
-
-Ensure there are no other server blocks with default_server or global redirect rules (e.g., files in /etc/nginx/conf.d) — these override your site block.
-
-If you saw conflicting server name "_" warnings earlier, remove duplicate enabled site files and keep a single default server block per machine.
-
-Step C — Configure HAProxy on LB01 (LB performs SSL termination and load balances)
-
-Example HAProxy config (/etc/haproxy/haproxy.cfg):
+Edit /etc/haproxy/haproxy.cfg (replace mahui.tech where needed):
 
 global
     log /dev/log local0
     maxconn 4096
     tune.ssl.default-dh-param 2048
+    stats socket /run/haproxy/admin.sock mode 660 level admin
 
 defaults
     log     global
@@ -182,16 +173,15 @@ defaults
     timeout connect 5s
     timeout client  30s
     timeout server  30s
+    timeout http-request 10s
 
-# Redirect HTTP to HTTPS
 frontend http_in
     bind *:80
     mode http
     redirect scheme https code 301 if !{ ssl_fc }
 
-# HTTPS frontend (TLS terminated here)
 frontend https_in
-    bind *:443 ssl crt /etc/haproxy/certs/mahui.tech.pem
+    bind *:443 ssl crt /etc/haproxy/certs/mahui.tech.pem no-sslv3
     mode http
     option forwardfor
     default_backend web_servers
@@ -199,61 +189,75 @@ frontend https_in
 backend web_servers
     mode http
     balance roundrobin
-    option httpchk GET / HTTP/1.1\r\nHost:\ mahui.tech
+    option httpchk GET /health.html HTTP/1.1\r\nHost:\ mahui.tech
     server web01 44.201.90.229:80 check
     server web02 44.206.243.220:80 check
 
-
-Important notes:
-
-crt /etc/haproxy/certs/mahui.tech.pem must be a single PEM file that contains the certificate chain then the private key concatenated.
-
-Health check option httpchk ensures inactive/unhealthy web servers are not used.
-
-Step D — Obtain Let’s Encrypt certs on LB01 (Certbot) & prepare HAProxy PEM
-
-Ensure DNS for mahui.tech and www.mahui.tech points to LB01 IP (44.202.4.117). Validate locally:
-
-dig +short mahui.tech
-dig +short www.mahui.tech
+# Optional: lightweight stats UI (enable if needed)
+listen stats
+    bind *:8404
+    mode http
+    stats enable
+    stats uri /haproxy_stats
+    stats refresh 30s
+    # stats auth admin:StrongPassword
 
 
-Both should resolve to 44.202.4.117.
+Important notes
 
-Stop HAProxy (so certbot standalone can bind to port 80):
+mahui.tech.pem must contain fullchain.pem then privkey.pem concatenated.
+
+option httpchk uses /health.html. Create that file on both web servers:
+
+<!-- /var/www/html/africa-business-app/health.html -->
+OK
+
+
+Validate and restart HAProxy
+
+sudo haproxy -f /etc/haproxy/haproxy.cfg -c
+sudo systemctl restart haproxy
+sudo systemctl status haproxy
+
+Obtaining Let’s Encrypt certs on LB01 (certbot stand-alone)
+
+Ensure DNS A records point to LB01:
+
+mahui.tech → 44.202.4.117
+
+www.mahui.tech → 44.202.4.117
+
+Stop HAProxy (certbot needs ports 80/443 free for standalone):
 
 sudo systemctl stop haproxy
 
 
-Install certbot (snap recommended) and request certificates:
+Install certbot (snap) and request certs:
 
-# install certbot (snap)
 sudo apt update
 sudo apt install -y snapd
 sudo snap install core; sudo snap refresh core
 sudo snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
 
-# request certificate; replace email with yours
-sudo certbot certonly --standalone -d mahui.tech -d www.mahui.tech --agree-tos --non-interactive -m youremail@example.com
+sudo certbot certonly --standalone \
+  -d mahui.tech -d www.mahui.tech \
+  --agree-tos --non-interactive -m youremail@example.com
 
 
-Create combined PEM for HAProxy:
+Build combined PEM for HAProxy:
 
 sudo mkdir -p /etc/haproxy/certs
 sudo bash -c 'cat /etc/letsencrypt/live/mahui.tech/fullchain.pem /etc/letsencrypt/live/mahui.tech/privkey.pem > /etc/haproxy/certs/mahui.tech.pem'
 sudo chmod 600 /etc/haproxy/certs/mahui.tech.pem
 
 
-Start HAProxy:
+Restart HAProxy:
 
 sudo systemctl start haproxy
-sudo systemctl enable haproxy
 
 
-Configure automatic renewal hook so HAProxy reloads after certificate renewal:
-
-Create /etc/letsencrypt/renewal-hooks/deploy/haproxy-reload.sh:
+Add renewal hook (so HAProxy reloads when certs renew). Create /etc/letsencrypt/renewal-hooks/deploy/haproxy-reload.sh:
 
 #!/bin/bash
 DOMAIN="mahui.tech"
@@ -267,41 +271,162 @@ Make it executable:
 sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/haproxy-reload.sh
 
 
-Test renewal dry run:
+Test renewal dry-run:
 
 sudo certbot renew --dry-run
 
-Step E — Final verification & testing (very important)
+Deployment automation (example scripts)
 
-Test Nginx backend health from LB01:
+configure-africa-app.sh — run on each web server (idempotent):
 
-ssh -i key.pem ubuntu@44.202.4.117
-curl -I http://44.201.90.229:80
-curl -I http://44.206.243.220:80
+#!/usr/bin/env bash
+set -euo pipefail
+APP_DIR="/var/www/html/africa-business-app"
+SITE_AVAIL="/etc/nginx/sites-available/africa_business_app.conf"
+SITE_ENABLED="/etc/nginx/sites-enabled/africa_business_app.conf"
+HOST_MARKER="$(hostname)"
+
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Run with sudo"
+  exit 1
+fi
+if [ ! -d "$APP_DIR" ]; then
+  echo "ERROR: $APP_DIR missing"
+  exit 2
+fi
+
+cat > "$SITE_AVAIL" <<EOF
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    root $APP_DIR;
+    index index.html index.htm;
+
+    location / {
+        try_files \$uri \$uri/ /index.html =404;
+    }
+
+    add_header X-Served-By "$HOST_MARKER" always;
+}
+EOF
+
+ln -sf "$SITE_AVAIL" "$SITE_ENABLED"
+rm -f /etc/nginx/sites-enabled/default || true
+chown -R www-data:www-data "$APP_DIR"
+find "$APP_DIR" -type d -exec chmod 755 {} \;
+find "$APP_DIR" -type f -exec chmod 644 {} \;
+nginx -t
+systemctl reload nginx
+echo "Done on $(hostname)."
 
 
-Both should return 200 OK and show the X-Served-By header.
+deploy-to-servers.sh — from your workstation to run the above on both servers (adjust SSH key path):
 
-Test LB HTTP → HTTPS redirect:
+#!/usr/bin/env bash
+set -euo pipefail
+SSH_KEY="africa-business-app/school"
+WEB1="ubuntu@44.201.90.229"
+WEB2="ubuntu@44.206.243.220"
+SCRIPT="configure-africa-app.sh"
+
+for HOST in "$WEB1" "$WEB2"; do
+  scp -i "$SSH_KEY" "$SCRIPT" "$HOST:~"
+  ssh -i "$SSH_KEY" "$HOST" "sudo bash ~/$SCRIPT"
+done
+
+Verification & testing (end-to-end)
+
+Check each backend (from LB01 or your laptop):
+
+curl -I http://44.201.90.229:80 | grep -i X-Served-By
+curl -I http://44.206.243.220:80 | grep -i X-Served-By
+
+
+Test LB HTTP → HTTPS redirect
 
 curl -I http://mahui.tech
-# expect 301 redirect to https
+# expect 301 Location: https://mahui.tech/
 
 
-Test HTTPS served by LB (repeat to see round-robin):
+Test HTTPS via LB and round-robin
 
 for i in {1..6}; do curl -sI https://mahui.tech | grep -i X-Served-By; sleep 1; done
 
 
-You should see X-Served-By: web01 and X-Served-By: web02 alternating. If only one server shows, check HAProxy backend health or nginx availability on the other server.
+You should see web01 and web02 alternate.
 
-Inspect certificate:
+Check certificate
 
 openssl s_client -connect mahui.tech:443 -servername mahui.tech </dev/null 2>/dev/null | openssl x509 -noout -dates
 
 
-Test app functionality through the LB (client experience test):
+Simulate failures
 
-Open https://mahui.tech in browser — use dev tools to confirm index.html loads and requests to World Bank API succeed in the console.
+Stop Nginx on Web02 and observe LB only returns web01. Restart Web02 and verify balancing resumes.
 
-Click several countries and indicators; confirm charts render and no CORS/HTTP errors.
+Common issues & troubleshooting
+
+Certbot NXDOMAIN error: Ensure DNS A records for mahui.tech and www.mahui.tech point to LB01 before running certbot.
+
+HAProxy fails to start due to PEM: Verify /etc/haproxy/certs/mahui.tech.pem exists and contains both the fullchain and private key concatenated.
+
+301 or redirect issues on web servers: Remove duplicate default_server blocks or any server blocks in /etc/nginx/conf.d/ that force redirects.
+
+Nginx permission errors on nginx -t: Use sudo nginx -t; if errors persist, check ownership of /var/log/nginx and /run/nginx.pid.
+
+CSS/asset changes not visible: Clear browser cache (Ctrl+F5), or test each backend directly with curl to ensure both servers have the updated file.
+
+Demo checklist (≤ 2 min)
+
+Record a short demo showing:
+
+Local app usage (search, open country profile).
+
+curl -I http://44.201.90.229:80 → X-Served-By: web01.
+
+curl -I http://44.206.243.220:80 → X-Served-By: web02.
+
+curl -I http://mahui.tech → shows 301 redirect to https.
+
+Repeat curl -sI https://mahui.tech multiple times and show X-Served-By alternates.
+
+Show cert details via openssl s_client or browser padlock.
+
+Credits & external resources
+
+World Bank Open Data API (V2) — primary data source. Documentation: https://datahelpdesk.worldbank.org/knowledgebase/articles/889386-developer-information-overview
+
+Thanks to the World Bank for making global development data available.
+
+Chart.js — charting library used for trend graphs (CDN). https://www.chartjs.org/
+
+Nginx — web server used on Web01 and Web02. https://nginx.org/
+
+HAProxy — load balancer used on LB01. https://www.haproxy.org/
+
+Let’s Encrypt / Certbot — free TLS certificates and automation. https://letsencrypt.org/
+ and https://certbot.eff.org/
+
+Helpful references & troubleshooting
+
+HAProxy docs and config examples: https://www.haproxy.org/#docs
+
+World Bank API v2 indicators: https://data.worldbank.org/indicator
+
+Security & operational notes
+
+Never commit private SSH keys, certificates, or any secrets to the repository. Use .gitignore.
+
+Keep certbot renewals tested: sudo certbot renew --dry-run.
+
+Rotate SSH keys if a key is suspected compromised. Keep permissions chmod 600 on private keys.
+
+Consider a small monitor (uptime ping) and log forwarding for production setups.
+
+License
+
+(Choose a license for your repo — e.g., MIT)
+
+MIT License
