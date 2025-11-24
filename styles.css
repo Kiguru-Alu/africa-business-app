@@ -1,50 +1,195 @@
 :root{
-    --bg:#f6f8fb; --card:#fff; --muted:#6b7280; --accent:#0b64d6;
+  --bg:#f6f8fb; --card:#fff; --muted:#6b7280; --accent:#0b64d6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  background:var(--bg); color:#0f1724; min-height:100vh;
+}
+
+/* Header */
+.topbar{
+  padding:14px 20px; background:linear-gradient(90deg,#07325f,#1b6be6); color:#fff;
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;
+}
+.brand{font-weight:700; font-size:18px}
+.tag{font-size:13px; opacity:0.95}
+
+/* Main Layout */
+.layout{display:flex; gap:18px; padding:18px; align-items:flex-start}
+.panel{background:var(--card); border-radius:10px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,.06)}
+.controls{width:320px; flex-shrink:0}
+.main{flex:1; max-height:72vh; overflow:auto}
+
+/* Form Controls */
+.control-group{margin-bottom:12px}
+.control-row{display:flex; gap:8px; margin-bottom:12px}
+select,input{
+  width:100%; padding:9px 10px; border-radius:8px; border:1px solid #e6edf6; 
+  background:#fff; font-size:14px;
+}
+
+/* Status Messages */
+.loader{margin-top:10px;color:var(--muted)}
+.error{color:#b91c1c;font-weight:600;margin-top:10px}
+
+/* Notes */
+.notes{margin-top:16px; font-size:13px; color:var(--muted)}
+.notes ul{margin:8px 0; padding-left:20px}
+.notes li{margin-bottom:4px}
+
+/* Table */
+.table-wrap{overflow:auto}
+table{width:100%; border-collapse:collapse; min-width:700px}
+th,td{padding:10px 12px; border-bottom:1px solid #eef4ff}
+th{background:#f3f7ff; text-align:left; font-weight:600; font-size:14px}
+.numeric{text-align:right}
+tr:hover{background:#fbfdff; cursor:pointer}
+
+/* Footer */
+.footer{padding:10px 18px;text-align:center;font-size:13px;color:var(--muted)}
+
+/* Profile Modal */
+.profile{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(2,6,23,0.45); visibility:hidden; opacity:0; transition:opacity .18s, visibility .18s;
+  z-index:1000; padding:20px;
+}
+.profile[aria-hidden="false"]{visibility:visible; opacity:1}
+.profile-inner{
+  width:840px; max-width:95%; background:var(--card); border-radius:10px; 
+  padding:18px; position:relative; max-height:90vh; overflow-y:auto;
+}
+.close{
+  position:absolute; right:12px; top:12px; border:0; background:transparent; 
+  font-size:18px; cursor:pointer; padding:4px 8px;
+}
+.chart-container{height:300px; position:relative}
+.small{font-size:13px}
+.muted{color:var(--muted)}
+.indicator-list{list-style:none;padding-left:0; margin:0}
+.indicator-list li{padding:8px 0;border-bottom:1px dashed #eef4ff}
+.profile-block{margin-top:16px}
+.profile-block h3{margin-top:0; margin-bottom:12px}
+
+/* ===== MOBILE RESPONSIVE ===== */
+
+/* Tablets and smaller (below 900px) */
+@media (max-width: 900px) {
+  .layout{
+    flex-direction:column; gap:16px; padding:12px;
   }
-  *{box-sizing:border-box}
-  body{
-    margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-    background:var(--bg); color:#0f1724; min-height:100vh;
+  
+  .controls{
+    width:100%; order:1;
   }
+  
+  .main{
+    width:100%; max-height:none; order:2;
+  }
+  
   .topbar{
-    padding:14px 20px; background:linear-gradient(90deg,#07325f,#1b6be6); color:#fff;
-    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 16px;
   }
-  .brand{font-weight:700; font-size:18px}
-  .tag{font-size:13px; opacity:0.95}
   
-  .layout{display:flex; gap:18px; padding:18px; align-items:flex-start}
-  .panel{background:var(--card); border-radius:10px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,.06)}
-  .controls{width:320px}
-  .main{flex:1; max-height:72vh; overflow:auto}
+  .brand{font-size:16px}
+  .tag{font-size:12px}
+}
+
+/* Mobile phones (below 640px) */
+@media (max-width: 640px) {
+  .topbar{
+    flex-direction:column; align-items:flex-start; gap:6px; padding:12px 16px;
+  }
   
-  .control-group{margin-bottom:12px}
-  .control-row{display:flex; gap:8px; margin-bottom:12px}
-  select,input{width:100%; padding:9px 10px; border-radius:8px; border:1px solid #e6edf6; background:#fff; font-size:14px}
+  .brand{font-size:16px}
+  .tag{font-size:11px}
   
-  .loader{margin-top:10px;color:var(--muted)}
-  .error{color:#b91c1c;font-weight:600;margin-top:10px}
+  .layout{
+    padding:10px; gap:12px;
+  }
   
-  .table-wrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:700px}
-  th,td{padding:10px 12px; border-bottom:1px solid #eef4ff}
-  th{background:#f3f7ff; text-align:left; font-weight:600}
-  .numeric{text-align:right}
-  tr:hover{background:#fbfdff; cursor:pointer}
+  .panel{
+    padding:12px; border-radius:8px;
+  }
   
-  .footer{padding:10px 18px;text-align:center;font-size:13px;color:var(--muted)}
+  /* Stack control rows on very small screens */
+  .control-row{
+    flex-direction:column; gap:10px;
+  }
   
+  select, input{
+    font-size:16px; /* Prevents zoom on iOS */
+    padding:10px;
+  }
+  
+  /* Table adjustments */
+  .table-wrap{
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+  }
+  
+  table{
+    min-width:600px; font-size:13px;
+  }
+  
+  th, td{
+    padding:8px 10px;
+  }
+  
+  th{font-size:13px}
+  
+  /* Profile modal adjustments */
   .profile{
-    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-    background:rgba(2,6,23,0.45); visibility:hidden; opacity:0; transition:opacity .18s, visibility .18s;
+    padding:10px; align-items:flex-start;
   }
-  .profile[aria-hidden="false"]{visibility:visible; opacity:1}
-  .profile-inner{width:840px; max-width:95%; background:var(--card); border-radius:10px; padding:18px; position:relative}
-  .close{position:absolute; right:12px; top:12px; border:0; background:transparent; font-size:18px; cursor:pointer}
-  .chart-container{height:300px}
-  .small{font-size:13px}
-  .muted{color:var(--muted)}
-  .indicator-list{list-style:none;padding-left:0}
-  .indicator-list li{padding:8px 0;border-bottom:1px dashed #eef4ff}
-  .profile-block{margin-top:12px}
   
+  .profile-inner{
+    width:100%; max-width:100%; padding:16px; margin-top:20px;
+  }
+  
+  .close{
+    right:8px; top:8px; font-size:20px; padding:6px 10px;
+  }
+  
+  .profile-block h3{
+    font-size:16px;
+  }
+  
+  .chart-container{
+    height:250px;
+  }
+  
+  .indicator-list li{
+    font-size:13px; padding:6px 0;
+  }
+  
+  .footer{
+    font-size:12px; padding:12px 16px;
+  }
+  
+  .notes{
+    font-size:12px;
+  }
+}
+
+/* Very small phones (below 380px) */
+@media (max-width: 380px) {
+  .brand{font-size:14px}
+  .tag{font-size:10px}
+  
+  table{
+    min-width:500px; font-size:12px;
+  }
+  
+  th, td{
+    padding:6px 8px;
+  }
+  
+  .chart-container{
+    height:220px;
+  }
+  
+  .profile-inner{
+    padding:12px;
+  }
+}
