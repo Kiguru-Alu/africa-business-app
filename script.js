@@ -5,6 +5,9 @@
    - Handles pagination, timeouts, retries, null values
 */
 
+//worldbank api variable
+const WB_API = window.ENV.API_BASE;
+//worldbank api variable
 const INDICATORS = [
     { code: "NY.GDP.MKTP.CD", label: "GDP (current US$)" },
     { code: "NY.GDP.MKTP.KD.ZG", label: "GDP growth (annual %)" },
@@ -88,7 +91,7 @@ const INDICATORS = [
   
   // load countries and filter to Africa
   async function loadCountries() {
-    const url = "https://api.worldbank.org/v2/country?format=json&per_page=400";
+    const url = `${WB_API}/country?format=json&per_page=400`;
     const json = await fetchJson(url);
     const list = Array.isArray(json) && json[1] ? json[1] : [];
     countries = list.map(c => ({
@@ -123,7 +126,7 @@ const INDICATORS = [
       const currentYear = new Date().getFullYear();
       const from = currentYear - 12;
       // initial page fetch to get pagination info
-      const base = `https://api.worldbank.org/v2/country/all/indicator/${indicatorCode}?format=json&date=${from}:${currentYear}&per_page=1000`;
+      const base = `${WB_API}/country/all/indicator/${indicatorCode}?format=json&date=${from}:${currentYear}&per_page=1000`;
       const firstJson = await fetchJson(base);
       if (!Array.isArray(firstJson)) throw new Error("Unexpected API response");
       const meta = firstJson[0] || {};
@@ -280,7 +283,7 @@ const INDICATORS = [
     try {
       const currentYear = new Date().getFullYear();
       const from = currentYear - 12;
-      const url = `https://api.worldbank.org/v2/country/${countryCode}/indicator/${indicatorCode}?format=json&date=${from}:${currentYear}&per_page=60`;
+      const url = `${WB_API}/country/${countryCode}/indicator/${indicatorCode}?format=json&date=${from}:${currentYear}&per_page=60`;
       const json = await fetchJson(url);
       const list = Array.isArray(json) && json[1] ? json[1] : [];
       list.sort((a,b)=>parseInt(b.date)-parseInt(a.date));
@@ -296,7 +299,7 @@ const INDICATORS = [
     try {
       const end = new Date().getFullYear();
       const start = end - years + 1;
-      const url = `https://api.worldbank.org/v2/country/${countryCode}/indicator/${indicatorCode}?format=json&date=${start}:${end}&per_page=60`;
+      const url = `${WB_API}/country/${countryCode}/indicator/${indicatorCode}?format=json&date=${start}:${end}&per_page=60`;
       const json = await fetchJson(url);
       const records = Array.isArray(json) && json[1] ? json[1] : [];
       // map year->value
