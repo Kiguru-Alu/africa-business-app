@@ -1,5 +1,8 @@
 # Africa Business App — World Economy Explorer
 
+
+(  Link to Demo Video : https://www.youtube.com/watch?v=4eq0RBKpBHA )
+
 > Static frontend (HTML/CSS/JS) dashboard for exploring World Bank V2 economic indicators with country profiles and 10-year charts.  
 > Designed to run locally for development and to be deployed to two Nginx web servers behind an HAProxy load balancer with HTTPS termination.
 
